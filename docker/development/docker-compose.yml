@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+    web:
+        container_name: nginx
+        image: nginx:alpine
+        ports:
+            - "8080:80"
+        environment:
+            - NGINX_HOST=foobar.com
+            - NGINX_PORT=80
+        volumes:
+            - web_temp:/tmp
+        
+    db:
+        container_name: mariadb
+        image: mariadb:10
+        restart: always
+        environment:
+            MYSQL_DATABASE: employees
+            MYSQL_USER: mysql
+            MYSQL_PASSWORD_FILE: /run/secrets/db_password
+            MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
+        ports:
+            - 3306:3306
+        volumes:
+            - "./database:/var/lib/mysql"
+        secrets:
+            - db_password
+            - db_root_password 
+      
+    adminer:
+        container_name: phpmyadmin
+        image: adminer
+        restart: always
+        ports:
+        - 8000:8080
+    
+    redis:
+        container_name: redis
+        image: redis:alpine
+        configs: 
+            - source: redis_config
+              target: /etc/redis/redis.conf
+        volumes:
+            - ./cache:/var/redis/cache
+
+secrets:
+    db_password:
+        file: db_password.txt
+    db_root_password:
+        file: db_root_password.txt
+
+configs:
+    redis_config:
+        file: ./redis_config.txt
+
+volumes:
+    web_temp:    
